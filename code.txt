@@ -1,0 +1,157 @@
+import { io } from "https://cdn.socket.io/4.7.5/socket.io.esm.min.js";
+const socket = io('https://whole-adapted-dingo.ngrok-free.app');
+
+const contacts_suport = document.querySelector('.contacts-suport-left');
+const form_message = document.querySelector('.send-messagens');
+const container_right = document.querySelector('.container-suport-right');
+const container_messagens = document.querySelector(".messagens");
+const header_id = document.querySelector('.header-id');
+
+let id_atual = '';
+socket.emit('request-messagens');
+function CreateDivMessageSuport(data) {
+    const message_div = document.createElement('div');
+    message_div.classList.add('message-suport');
+    const text_message = document.createElement('p');
+    const date_span = document.createElement('span');
+    text_message.textContent = data.message;
+    date_span.textContent = new Date(data.date).toLocaleString();
+    date_span.classList.add('date-message-suport');
+    message_div.appendChild(text_message);
+    message_div.appendChild(date_span);
+    return container_messagens.appendChild(message_div);
+};
+
+socket.on('suport-message', array => {
+    console.log(array);
+    CreateDivMessageSuport(array[array.length - 1]);
+});
+form_message.addEventListener('submit', event => {
+    event.preventDefault();
+    const input_message = form_message.querySelector('input');
+    socket.emit('suport-message', {
+        id_atual,
+        message: input_message.value
+    });
+    console.log('a')
+    input_message.value = '';
+
+});
+
+const ExistsContact = (id) => document.querySelector(`[data-id="${id}"]`);
+socket.on("writing", data => {
+    console.log('usuário', data);
+})
+
+function CreateDivMessageClient(id, data) {
+    const message_div = document.createElement('div');
+    message_div.classList.add('message-client');
+    message_div.innerHTML = `
+        <div class="id-client" data-id="${id}">
+            <strong>${id}</strong>
+        </div>
+        <p>${data.message}</p>
+        <span class='date-message-client'>${new Date(data.date).toLocaleString()}</span>
+    `;
+    container_messagens.appendChild(message_div);
+};
+function OpenMensagem(id, messagens) {
+    const contact = ExistsContact(id);
+    contact.addEventListener('click', function
+        () {
+        id_atual = id;
+        form_message.setAttribute('data-id', id);
+        container_messagens.innerHTML = '';
+        header_id.innerHTML = `Está falando com <strong>${id}</strong>`
+        container_right.style.display = 'block';
+        messagens.forEach(data => {
+            const message_div = document.createElement('div');
+            message_div.classList.add('message-client');
+            message_div.innerHTML = `
+                <div class="id-client" data-id="${id}">
+                    <strong>${id}</strong>
+                </div>
+                <p>${data.message}</p>
+                <span class='date-message-client'>${new Date(data.date).toLocaleString()}</span>
+            `;
+            container_messagens.appendChild(message_div);
+        });
+        // socket.on('old-messagens', ({ client }) => OldMessagens(client, 'message-client'));
+
+    });
+    return;
+};
+function CreateContact(id, array) {
+    const contact = document.createElement('div');
+    const session_id = document.createElement('div');
+    const message = document.createElement('div');
+    contact.classList.add('contact');
+    session_id.classList.add('session-id');
+    message.classList.add('message');
+    session_id.innerHTML = `<p>${id}</p>`;
+    contact.setAttribute('data-id', id);
+    console.log(array)
+    // console.log(sessions[id]);
+    message.innerHTML = `
+        <div>
+            <p>${array[array.length - 1].message}</p>
+            <span class="message-length">${array.length}</span>
+        </div>
+    `;
+    contact.appendChild(session_id);
+    contact.appendChild(message);
+    contacts_suport.appendChild(contact);
+};
+function UpdateContact(id, array) {
+    const contact = ExistsContact(id);
+    const message = contact.querySelector('.message');
+    message.innerHTML = `
+        <div>
+            <p>${array[array.length - 1].message}</p>
+            <span class="message-length">${array.length}</span>
+
+        </div>
+    `;
+    OpenMensagem(id, array);
+    if (contact.getAttribute('data-id') === id_atual) {
+        // const end_message = sessions[id_atual][sessions[id_atual].length - 1];
+        // console.log(end_message);
+        // PrivateRoomMessage(contact,id,sessions);
+        CreateDivMessageClient(id, array[array.length - 1]);
+    };
+    contacts_suport.appendChild(contact);
+}
+// function writingUser() {
+//     socket.on('writing-user', data => {
+//         console.log(data);
+//     });
+// };
+socket.on('sessions-messagens', sessions => {
+    console.log(sessions);
+    const messagens_clients = sessions.client
+    Object.keys(sessions).forEach(id => {
+        if (sessions[id].client.length !== 0 && !ExistsContact(sessions[id].client[0].sessionId)) {
+            CreateContact(id,sessions[id].client)
+            socket.on('old-messagens', ({ suport }) => OldMessagensSuport(suport, 'message-suport'));
+        };
+        if (ExistsContact(sessions[id].client[0].sessionId)) {
+            UpdateContact(sessions[id].client[0].sessionId, sessions[id].client);
+        };
+    });
+});
+function OldMessagensSuport(array) {
+    console.log(array)
+    array.forEach(data => {
+        console.log(data);
+        const div_message = document.createElement('div');
+        div_message.classList.add('message-suport');
+        div_message.innerHTML = `
+            <p>${data.message}</p>
+            <span class='date-time-suport'>${new Date(data.date).toLocaleString()}</span>
+            `;
+        container_messagens.appendChild(div_message);
+    });
+};
+socket.on('old-messagens', ({ suport }) => {
+    console.log(suport);
+});
