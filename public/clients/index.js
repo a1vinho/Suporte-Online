@@ -9,7 +9,7 @@ input_message.addEventListener('input', function () {
     console.log(true)
     socket.emit('writing', id_session);
 });
-window.addEventListener("load",function() {
+window.addEventListener("load", function () {
     container_message.scrollTop = container_message.scrollHeight;
 });
 send_message.addEventListener("submit", function (event) {
@@ -57,20 +57,22 @@ function OldMessagens(data, classTag, estruct_html) {
         return a.date - b.date
     });
     let data_class = '';
-    for (const data of joinArray) {
-        const div_message = document.createElement('div');
-        data.profile ? data_class = 'messagens' : data_class = 'messagens-client';
-        div_message.classList.add(data_class);
-        div_message.innerHTML = `
-            ${data.profile ? `<strong>${data.profile}</strong>` : ''}
-            <p>${data.message}</p>
-            <span class='date-time-suport'>${new Date(data.date).toLocaleString()}</span>
-            `;
-        container_message.appendChild(div_message);
+    for (const msg of joinArray) {
+        const message = document.createElement('div');
+        msg.id_room ? data_class = 'messagens' : data_class = 'messagens-client';
+        message.classList.add(data_class);
+        message.innerHTML = `
+            ${msg.id_room ? '<strong>Suporte</strong>' : ''}
+            <div>
+                <p>${msg.message}</p>
+            </div>
+            <span class="${data_class === 'messagens-client' ? 'date-message' : 'date-message-suport'}">${new Date(msg.date).toLocaleString()}</span>
+        `;
+        container_message.appendChild(message);
     };
     container_message.scrollTop = container_message.scrollHeight;
 };
-socket.on('old-messagens', (data) => OldMessagens(data, 'messagens', true));
+socket.on('old-messagens-user', (data) => OldMessagens(data, 'messagens', true));
 
 const information_suport = document.querySelector('.information-suport');
 const shadow = document.querySelector('.shadow');
@@ -84,18 +86,20 @@ shadow.addEventListener('click', function () {
     information_suport.style.display = 'none';
 });
 
-socket.on("suport-message", data => {
+socket.on("messagens-room", data => {
     const message = document.createElement('div');
     message.classList.add('messagens');
-    const profile = data[0].profile;
-    const message_suport = data[data.length - 1].message;
-    const date = data[data.length - 1].date;
+    const index_message = data.suport.length - 1;
+    const last_message = data.suport[index_message];
+    console.log(last_message)
     message.innerHTML = `
-        <strong>${profile}</strong>
-        <p>${message_suport}</p>
-        <span class='date-message-suport'>${new Date(date).toLocaleString()}</span>
-
+        <strong>Suporte</strong>
+        <div>
+            <p>${last_message.message}</p>
+        </div>
+        <span class='date-message-suport'>${new Date(last_message.date).toLocaleString()}</span>
     `;
-    container_message.appendChild(message);
-    container_message.scrollTop = container_message.scrollHeight;
+    if (last_message.id_room === id_session) {
+        container_message.appendChild(message);
+    };
 });

@@ -11,8 +11,8 @@ export default function (io, server) {
             suport: []
         };
         socket.emit('suport chat', {
-            profile: "Onion Suport",
-            message: "Bem vindo ao suporte do <strong>Onion</strong>,como podemos lhe ajuda ? :D"
+            profile: "Suporte",
+            message: "Bem vindo ao suporte do <strong>Suporte</strong>,como podemos lhe ajuda ? :D"
         });
         // socket.emit('sessions-messagens', sessions_id);
         socket.emit('session-id', sessionId);
@@ -33,13 +33,14 @@ export default function (io, server) {
             io.emit('room-chat',sessions_id[data.id_session]);
             socket.emit('sessions-messagens', sessions_id);
         });
-        socket.emit('old-messagens', sessions_id);
-        socket.emit('old-messagens-suport', sessions_id);
+        socket.emit('old-messagens-user', sessions_id[sessionId]);
+        socket.emit('old-messagens-suport',sessions_id);
+        // socket.emit('old-messagens-suport', sessions_id);
         socket.on('suport-message',data => {
             const suport_messagens = sessions_id[data.id_room].suport;
             suport_messagens.push({
                 message: data.message,
-                date: new Date(),
+                date: Date.now(),
                 id_room: data.id_room
             });
             io.emit('messagens-room',sessions_id[data.id_room]);
