@@ -1,19 +1,17 @@
 import { io } from "https://cdn.socket.io/4.7.5/socket.io.esm.min.js";
 import { id_session } from "./suport.js";
-const socket = io('https://192.168.1.81');
-
 const container_contacts = document.querySelector('.contacts-suport-left');
 const container_right = document.querySelector('.container-suport-right');
 export const container_messagens = document.querySelector('.messagens');
+const right_messagens_container = document.querySelector('.container-messagens-right');
 const form_send = document.querySelector('.send-messagens');
 
 export let id_click = '';
 socket.on('request-messagens');
 // termina de finalizar a abertura das mensagens para que funcione corretamente.
-function MessagensLoopSend(session_id, data) {
+
+function RenderMessagens(session_id, joinArray, room_message) {
     let data_class = '';
-    const room_message = CreateContainerRoom(session_id);
-    const joinArray = [...data[session_id].client, ...data[session_id].suport].sort((a, b) => a.date - b.date);
     for (const msg of joinArray) {
         console.log(msg);
         const message = document.createElement('div');
@@ -28,7 +26,13 @@ function MessagensLoopSend(session_id, data) {
         `;
         room_message.appendChild(message);
     };
-    container_messagens.appendChild(room_message);
+    return room_message;
+}
+function MessagensLoopSend(session_id, data) {
+    const room_message = CreateContainerRoom(session_id);
+    const joinArray = [...data[session_id].client, ...data[session_id].suport].sort((a, b) => a.date - b.date);
+    const messagens = RenderMessagens(session_id, joinArray, room_message);
+    container_messagens.appendChild(messagens);
 };
 
 export function CreateContainerRoom(session_id) {
@@ -119,23 +123,53 @@ function FunctionObjectContact(data) {
 socket.on('sessions-messagens', data => FunctionObjectContact(data));
 socket.on('old-messagens-suport', data => FunctionObjectContact(data));
 
-socket.on('room-chat', data => {
-    console.log(data);
-    const room = CreateContainerRoom(id_click);
-    const message = document.createElement("div");
-    message.classList.add('message-client', id_click);
-    const index_last = data.client.length - 1;
-    const last_message = data.client[index_last];
+socket.on('room-chat', ({ messagens, session_id }) => {
+    let data_class = '';
+    const room = CreateContainerRoom(session_id);
+    const message = document.createElement('div');
+    const joinArray = [...messagens.client, ...messagens.suport].sort((a, b) => a.date - b.date);
+    const last_message = joinArray[joinArray.length - 1];
+    last_message.id_room ? data_class = 'message-suport' : data_class = 'message-client';
+    message.classList.add(data_class);
+
     message.innerHTML = `
+        ${data_class === 'message-suport' ? '' : `<strong>${session_id}</strong>`}
         <div>
-            <strong>${id_click}</strong>
-            <p>${last_message.message}</p>
+            <p>
+                ${last_message.message}
+            </p>
         </div>
-        <span class='date-message-client'>${new Date(last_message.date).toLocaleString()}</span>
-        `;
-    // const contact_click = ExistsContactLeft(id_click);
-    if (last_message.sessionId === id_click) {
+        <span class="${data_class === 'message-suport' ? 'date-message-suport' : 'date-message-client'}">${new Date(last_message.date).toLocaleString()}</span>
+    `;
+    if (last_message.sessionId === id_click || last_message.id_room === id_click) {
         room.appendChild(message);
-        container_messagens.appendChild(room);
+        right_messagens_container.scrollTop = right_messagens_container.scrollHeight;
+    }
+});
+
+socket.on('writing',(data) => {
+    console.log(data)
+    const room = CreateContainerRoom(data.id_session);
+    let writing = room.querySelector('.writing');
+    if (!writing) {
+        writing = document.createElement('div');
+    }
+    console.log(writing);
+    if (!room.childNodes[1] && data.text) {
+        writing.classList.add('writing');
+        writing.textContent = 'Escrevendo...';
+        room.appendChild(writing);
+    }
+    if (!data.text.trim() && room.childNodes[1]) {
+        room.removeChild(writing);
+    }
+});
+socket.on('writing-key',data => {
+    console.log(data);
+    const room = CreateContainerRoom(data.id_session);
+    const writing = room.querySelector('.writing');
+    if (writing || !data.text.trim()) {
+        console.log(writing);
+        room.removeChild(writing);
     };
 });

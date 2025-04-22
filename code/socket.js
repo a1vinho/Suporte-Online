@@ -30,7 +30,10 @@ export default function (io, server) {
             data.message = sanitize;
             socket.emit("room-chat",sessions_id[data.id_session]);
             socket.emit('message',data);
-            io.emit('room-chat',sessions_id[data.id_session]);
+            io.emit('room-chat',{
+                messagens:sessions_id[data.id_session],
+                session_id:data.id_session
+            });
             socket.emit('sessions-messagens', sessions_id);
         });
         socket.emit('old-messagens-user', sessions_id[sessionId]);
@@ -42,6 +45,10 @@ export default function (io, server) {
                 message: data.message,
                 date: Date.now(),
                 id_room: data.id_room
+            });
+            io.emit('room-chat',{
+                messagens:sessions_id[data.id_room],
+                session_id:data.id_room
             });
             io.emit('messagens-room',sessions_id[data.id_room]);
         });
@@ -57,6 +64,8 @@ export default function (io, server) {
             console.log('escrevendo...', data);
             io.emit('writing', data);
         });
-        
+        socket.on('writing-key',data => {
+            io.emit('writing-key',data);
+        });
     });
 };

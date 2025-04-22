@@ -37,6 +37,7 @@ app.use('/clients', express.static('public/clients'));
 app.use('/admin', express.static('public/admin'));
 const server = http.createServer(app);
 const io = new Server(server, {
+    transports: ["websocket"],
     cors: {
         origin: '*'
     }

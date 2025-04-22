@@ -1,7 +1,12 @@
-FROM node:alpine
+FROM node
 
 WORKDIR /app
 
+COPY package.json
 COPY . .
 
-CMD ['npx',"nodemon serve.js"]
+RUN apt update && apt upgrade -y && npm install 
+
+EXPOSE 8083
+
+CMD ["npm","start"]

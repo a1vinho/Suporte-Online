@@ -4,10 +4,14 @@ const socket = io('https://192.168.1.81');
 const send_message = document.querySelector('.send-message');
 const input_message = send_message.querySelector('input');
 const container_message = document.querySelector('.container-messagens');
+
 let id_session;
 input_message.addEventListener('input', function () {
     console.log(true)
-    socket.emit('writing', id_session);
+    socket.emit('writing', {
+        id_session,
+        text: this.value
+    });
 });
 window.addEventListener("load", function () {
     container_message.scrollTop = container_message.scrollHeight;
@@ -103,3 +107,14 @@ socket.on("messagens-room", data => {
         container_message.appendChild(message);
     };
 });
+
+document.body.addEventListener('keydown',event => {
+    if (event.code === 'Enter') {
+        console.log('enter');
+        socket.emit('writing-key',{
+            key: 'enter',
+            id_session,
+            text: input_message.value
+        });
+    }
+})
